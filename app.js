@@ -21,8 +21,6 @@ const elements = {
   studentButtonsGrid: document.querySelector('#studentButtonsGrid'),
   lapNoteInput: document.querySelector('#lapNoteInput'),
   undoBtn: document.querySelector('#undoBtn'),
-  finishStudentBtn: document.querySelector('#finishStudentBtn'),
-  resetSessionBtn: document.querySelector('#resetSessionBtn'),
   exportJsonBtn: document.querySelector('#exportJsonBtn'),
   exportCsvBtn: document.querySelector('#exportCsvBtn'),
   refreshCacheBtn: document.querySelector('#refreshCacheBtn'),
@@ -703,8 +701,6 @@ function bindEvents() {
   });
 
   elements.undoBtn.addEventListener('click', undoLastLap);
-  elements.finishStudentBtn.addEventListener('click', finishStudentSession);
-  elements.resetSessionBtn.addEventListener('click', resetSession);
   elements.exportJsonBtn.addEventListener('click', exportToJson);
   elements.exportCsvBtn.addEventListener('click', exportToCsv);
   elements.refreshCacheBtn.addEventListener('click', forceReloadApp);
@@ -771,7 +767,9 @@ function bindEvents() {
 
 bindEvents();
 render();
-setInterval(renderTimer, 1000);
+setInterval(() => {
+  render();
+}, 1000);
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

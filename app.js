@@ -269,7 +269,7 @@ function render() {
 
   if (!hasStarted) {
     elements.lapButton.querySelector('.lap-button-label').textContent = 'Via';
-    elements.lapButton.querySelector('.lap-button-counter').textContent = `${totalLaps} giri`;
+    elements.lapButton.querySelector('.lap-button-counter').textContent = '';
   } else {
     elements.lapButton.querySelector('.lap-button-label').textContent = 'Giro';
     elements.lapButton.querySelector('.lap-button-counter').textContent = `${totalLaps} giri`;

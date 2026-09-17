@@ -271,7 +271,7 @@ function renderLaps() {
 
 function renderTimer() {
   const activeStudent = getActiveStudent();
-  const activeSessionStart = activeStudent?.sessionStartedAt || null;
+  const activeSessionStart = state.sessionStartedAt || activeStudent?.sessionStartedAt || null;
 
   if (!activeSessionStart) {
     elements.sessionTimer.textContent = '00:00:00';
@@ -353,7 +353,14 @@ function addStudent(name) {
   }
 
   if (state.students.length >= MAX_STUDENTS) {
-    window.alert(`Puoi monitorare al massimo ${MAX_STUDENTS} ragazzi contemporaneamente.`);
+    showCustomDialog({
+      title: 'Limite studenti',
+      text: `Puoi monitorare al massimo ${MAX_STUDENTS} ragazzi contemporaneamente.`,
+      primaryLabel: 'Ok',
+      secondaryLabel: 'Chiudi',
+      onPrimary: () => {},
+      onSecondary: () => {}
+    });
     return;
   }
 
@@ -401,6 +408,8 @@ function recordLap(studentId = state.activeStudentId) {
   if (!activeStudent.sessionStartedAt) {
     activeStudent.sessionStartedAt = now;
   }
+
+  state.sessionStartedAt = activeStudent.sessionStartedAt;
 
   const previousLap = activeStudent.laps[activeStudent.laps.length - 1];
   const lastTimestamp = previousLap ? previousLap.timestamp : activeStudent.sessionStartedAt;
@@ -532,53 +541,61 @@ function finishAllActiveStudents() {
     return;
   }
 
-  const confirmed = window.confirm('Chiudere la corsa di tutti gli studenti attivi?');
-  if (!confirmed) {
-    return;
-  }
+  showCustomDialog({
+    title: 'Fine corsa',
+    text: 'Chiudere la corsa di tutti gli studenti attivi?',
+    primaryLabel: 'Sì',
+    secondaryLabel: 'No',
+    onPrimary: () => {
+      runningStudents.forEach((student) => {
+        student.sessionStartedAt = null;
+      });
 
-  runningStudents.forEach((student) => {
-    student.sessionStartedAt = null;
+      state.sessionStartedAt = null;
+      elements.lapNoteInput.value = '';
+      saveState();
+      render();
+    },
+    onSecondary: () => {}
   });
-
-  state.sessionStartedAt = null;
-  elements.lapNoteInput.value = '';
-  saveState();
-  render();
 }
 
 async function forceReloadApp() {
-  const confirmed = window.confirm('Ripristinare la situazione iniziale dell\'app e ricaricarla?');
-  if (!confirmed) {
-    return;
-  }
+  showCustomDialog({
+    title: 'Aggiorna app',
+    text: 'Ripristinare la situazione iniziale dell\'app e ricaricarla?',
+    primaryLabel: 'Sì',
+    secondaryLabel: 'No',
+    onPrimary: async () => {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+        state.className = 'Classe 1';
+        state.activeStudentId = null;
+        state.sessionStartedAt = null;
+        state.students = [
+          { id: createId(), name: 'Studente 1', laps: [] },
+          { id: createId(), name: 'Studente 2', laps: [] }
+        ];
+        state.activeStudentId = state.students[0].id;
+        saveState();
 
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-    state.className = 'Classe 1';
-    state.activeStudentId = null;
-    state.sessionStartedAt = null;
-    state.students = [
-      { id: createId(), name: 'Studente 1', laps: [] },
-      { id: createId(), name: 'Studente 2', laps: [] }
-    ];
-    state.activeStudentId = state.students[0].id;
-    saveState();
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((registration) => registration.unregister()));
+        }
 
-    if ('serviceWorker' in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map((registration) => registration.unregister()));
-    }
-
-    if ('caches' in window) {
-      const cacheNames = await caches.keys();
-      await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
-    }
-  } catch (error) {
-    console.warn('Impossibile svuotare cache del service worker:', error);
-  } finally {
-    window.location.reload();
-  }
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+        }
+      } catch (error) {
+        console.warn('Impossibile svuotare cache del service worker:', error);
+      } finally {
+        window.location.reload();
+      }
+    },
+    onSecondary: () => {}
+  });
 }
 
 function exportToJson() {
@@ -674,15 +691,19 @@ function deleteLapById(lapId) {
     return;
   }
 
-  const confirmed = window.confirm(`Eliminare il giro #${lap.lapNumber} di ${activeStudent.name}?`);
-  if (!confirmed) {
-    return;
-  }
-
-  activeStudent.laps = activeStudent.laps.filter((item) => item.id !== lapId);
-  reindexStudentLaps(activeStudent);
-  saveState();
-  render();
+  showCustomDialog({
+    title: 'Elimina giro',
+    text: `Eliminare il giro #${lap.lapNumber} di ${activeStudent.name}?`,
+    primaryLabel: 'Sì',
+    secondaryLabel: 'No',
+    onPrimary: () => {
+      activeStudent.laps = activeStudent.laps.filter((item) => item.id !== lapId);
+      reindexStudentLaps(activeStudent);
+      saveState();
+      render();
+    },
+    onSecondary: () => {}
+  });
 }
 
 function bindEvents() {

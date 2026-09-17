@@ -335,7 +335,7 @@ button:active {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding: 16px 20px;
+  padding: 16px 20px 16px 56px;
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 
@@ -383,6 +383,7 @@ button:active {
   text-align: center;
   width: 100%;
   min-width: 0;
+  margin: 0 auto;
 }
 
 .lap-button-label {

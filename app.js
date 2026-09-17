@@ -587,25 +587,27 @@ function exportToJson() {
 }
 
 function exportToCsv() {
-  const activeStudent = getActiveStudent();
-  if (!activeStudent) {
+  if (!state.students.length) {
     return;
   }
 
   const rows = [
-    ['lapNumber', 'timestamp', 'lapTimeMs', 'cumulativeTimeMs', 'note'],
-    ...activeStudent.laps.map((lap) => [
-      lap.lapNumber,
-      new Date(lap.timestamp).toISOString(),
-      lap.lapTimeMs,
-      lap.cumulativeTimeMs,
-      lap.note || ''
-    ])
+    ['studentName', 'lapNumber', 'timestamp', 'lapTimeMs', 'cumulativeTimeMs', 'note'],
+    ...state.students.flatMap((student) =>
+      student.laps.map((lap) => [
+        student.name,
+        lap.lapNumber,
+        new Date(lap.timestamp).toISOString(),
+        lap.lapTimeMs,
+        lap.cumulativeTimeMs,
+        lap.note || ''
+      ])
+    )
   ];
 
   const csvContent = rows.map((row) => row.map(escapeCsvValue).join(',')).join('\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  downloadBlob(blob, `${sanitizeFileName(activeStudent.name)}-giri.csv`);
+  downloadBlob(blob, `${sanitizeFileName(state.className || 'classe')}-giri.csv`);
 }
 
 function sanitizeFileName(value) {

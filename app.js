@@ -295,7 +295,11 @@ function renderStudentButtons() {
       const totalTime = lastLap ? lastLap.cumulativeTimeMs : 0;
       const isActive = student.id === state.activeStudentId;
       const liveTimeMs = student.sessionStartedAt ? Date.now() - student.sessionStartedAt : totalTime;
-      const lapLabel = student.sessionStartedAt && student.laps.length === 0 ? 'VIA' : `${student.laps.length} giri`;
+      const lapLabel = !student.sessionStartedAt
+        ? 'VIA'
+        : student.laps.length === 0
+          ? '0 giri'
+          : `${student.laps.length} giri`;
 
       return `
         <div class="student-button-shell" data-student-id="${student.id}">
@@ -411,13 +415,19 @@ function recordLap(studentId = state.activeStudentId) {
 
   if (!activeStudent.sessionStartedAt) {
     activeStudent.sessionStartedAt = now;
+    state.sessionStartedAt = now;
+    state.activeStudentId = activeStudent.id;
+    elements.lapNoteInput.value = '';
+    saveState();
+    render();
+    return;
   }
 
   state.sessionStartedAt = activeStudent.sessionStartedAt;
 
   const previousLap = activeStudent.laps[activeStudent.laps.length - 1];
   const lastTimestamp = previousLap ? previousLap.timestamp : activeStudent.sessionStartedAt;
-  const lapTimeMs = previousLap ? now - lastTimestamp : 0;
+  const lapTimeMs = previousLap ? now - lastTimestamp : now - activeStudent.sessionStartedAt;
   const cumulativeTimeMs = previousLap ? previousLap.cumulativeTimeMs + lapTimeMs : lapTimeMs;
 
   const newLap = {
@@ -499,6 +509,15 @@ function finishStudentSession(studentId = state.activeStudentId) {
         render();
       }
     });
+    return;
+  }
+
+  if (!activeStudent.laps.length) {
+    activeStudent.sessionStartedAt = null;
+    state.sessionStartedAt = null;
+    elements.lapNoteInput.value = '';
+    saveState();
+    render();
     return;
   }
 

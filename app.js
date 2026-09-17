@@ -11,6 +11,7 @@ const elements = {
   lapButton: document.querySelector('#lapButton'),
   lapNoteInput: document.querySelector('#lapNoteInput'),
   undoBtn: document.querySelector('#undoBtn'),
+  resetSessionBtn: document.querySelector('#resetSessionBtn'),
   exportJsonBtn: document.querySelector('#exportJsonBtn'),
   exportCsvBtn: document.querySelector('#exportCsvBtn'),
   addStudentBtn: document.querySelector('#addStudentBtn'),
@@ -350,6 +351,23 @@ function undoLastLap() {
   render();
 }
 
+function resetSession() {
+  const activeStudent = getActiveStudent();
+  if (!activeStudent) {
+    return;
+  }
+
+  const confirmed = window.confirm('Resettare la sessione corrente dello studente attivo?');
+  if (!confirmed) {
+    return;
+  }
+
+  state.sessionStartedAt = null;
+  activeStudent.laps = [];
+  saveState();
+  render();
+}
+
 function exportToJson() {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
   downloadBlob(blob, `${sanitizeFileName(state.className || 'classe')}.json`);
@@ -466,6 +484,7 @@ function bindEvents() {
 
   elements.lapButton.addEventListener('click', recordLap);
   elements.undoBtn.addEventListener('click', undoLastLap);
+  elements.resetSessionBtn.addEventListener('click', resetSession);
   elements.exportJsonBtn.addEventListener('click', exportToJson);
   elements.exportCsvBtn.addEventListener('click', exportToCsv);
 
@@ -535,7 +554,7 @@ setInterval(renderTimer, 1000);
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./service-worker.js').catch((error) => {
+    navigator.serviceWorker.register('./service-worker.js?v=2').catch((error) => {
       console.warn('Service worker non registrato:', error);
     });
   });

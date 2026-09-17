@@ -10,8 +10,8 @@
       name="description"
       content="App rapida per contare giri di corsa e registrare tempi per più studenti."
     />
-    <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="manifest" href="./manifest.webmanifest?v=2" />
+    <link rel="stylesheet" href="./styles.css?v=2" />
     <title>Lap Tracker</title>
   </head>
   <body>
@@ -63,6 +63,9 @@
 
           <div class="action-row">
             <button id="undoBtn" class="ghost-button" type="button">Annulla ultimo</button>
+            <button id="resetSessionBtn" class="ghost-button danger" type="button">Reset sessione</button>
+          </div>
+          <div class="action-row">
             <button id="exportJsonBtn" class="secondary-button" type="button">Esporta JSON</button>
             <button id="exportCsvBtn" class="secondary-button" type="button">Esporta CSV</button>
           </div>
@@ -77,6 +80,6 @@
       </section>
     </div>
 
-    <script src="./app.js"></script>
+    <script src="./app.js?v=2"></script>
   </body>
 </html>

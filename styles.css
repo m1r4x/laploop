@@ -179,6 +179,12 @@ textarea {
   color: var(--muted);
 }
 
+.ghost-button.danger {
+  color: #ffd8d8;
+  border: 1px solid rgba(255, 107, 107, 0.45);
+  background: rgba(255, 107, 107, 0.08);
+}
+
 button:active {
   transform: scale(0.98);
 }

@@ -15,6 +15,7 @@ const elements = {
   resetSessionBtn: document.querySelector('#resetSessionBtn'),
   exportJsonBtn: document.querySelector('#exportJsonBtn'),
   exportCsvBtn: document.querySelector('#exportCsvBtn'),
+  refreshCacheBtn: document.querySelector('#refreshCacheBtn'),
   addStudentBtn: document.querySelector('#addStudentBtn'),
   studentFormSection: document.querySelector('#studentFormSection'),
   newStudentName: document.querySelector('#newStudentName'),
@@ -263,7 +264,10 @@ function render() {
   const activeStudent = getActiveStudent();
   const totalLaps = activeStudent ? activeStudent.laps.length : 0;
 
-  if (!state.sessionStartedAt) {
+  const hasStarted = Boolean(state.sessionStartedAt);
+  elements.lapButton.classList.toggle('started', hasStarted);
+
+  if (!hasStarted) {
     elements.lapButton.querySelector('.lap-button-label').textContent = 'Via';
     elements.lapButton.querySelector('.lap-button-counter').textContent = `${totalLaps} giri`;
   } else {
@@ -387,6 +391,24 @@ function resetSession() {
   render();
 }
 
+async function forceReloadApp() {
+  try {
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    }
+
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+    }
+  } catch (error) {
+    console.warn('Impossibile svuotare cache del service worker:', error);
+  } finally {
+    window.location.reload();
+  }
+}
+
 function exportToJson() {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
   downloadBlob(blob, `${sanitizeFileName(state.className || 'classe')}.json`);
@@ -507,6 +529,7 @@ function bindEvents() {
   elements.resetSessionBtn.addEventListener('click', resetSession);
   elements.exportJsonBtn.addEventListener('click', exportToJson);
   elements.exportCsvBtn.addEventListener('click', exportToCsv);
+  elements.refreshCacheBtn.addEventListener('click', forceReloadApp);
 
   elements.addStudentBtn.addEventListener('click', () => {
     elements.studentFormSection.classList.remove('hidden');

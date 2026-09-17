@@ -335,12 +335,32 @@ button:active {
   justify-content: center;
   gap: 12px;
   padding: 16px 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.lap-button:active {
+  transform: scale(0.98);
 }
 
 .lap-button-runner {
   font-size: clamp(2rem, 6vw, 3rem);
   display: inline-block;
   transform-origin: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease, filter 0.2s ease;
+  filter: saturate(0.5);
+}
+
+.lap-button.started {
+  background: linear-gradient(180deg, #d9ff66 0%, #8edb3d 100%);
+  box-shadow: 0 12px 26px rgba(126, 202, 49, 0.35);
+}
+
+.lap-button.started .lap-button-runner {
+  opacity: 1;
+  visibility: visible;
+  filter: saturate(1.2);
   animation: runner-bob 0.7s ease-in-out infinite alternate;
 }
 
@@ -362,8 +382,12 @@ button:active {
 }
 
 @keyframes runner-bob {
-  0% { transform: translateY(0) scale(1); }
-  100% { transform: translateY(-4px) scale(1.08); }
+  0% {
+    transform: translateX(-4px) translateY(0) scale(1);
+  }
+  100% {
+    transform: translateX(6px) translateY(-4px) scale(1.08);
+  }
 }
 
 .lap-actions {

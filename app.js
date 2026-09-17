@@ -257,7 +257,10 @@ function renderLaps() {
     return `
       <div class="lap-row" data-lap-id="${lap.id}">
         <div class="lap-number">#${lap.lapNumber}</div>
-        <div class="lap-meta">${formatTimeStamp(lap.timestamp)}</div>
+        <div class="lap-meta">
+          <span class="lap-student">${escapeHtml(activeStudent.name)}</span>
+          <span>${formatTimeStamp(lap.timestamp)}</span>
+        </div>
         <div class="lap-time"><strong>${formatShortDuration(lap.lapTimeMs)}</strong> Lap</div>
         <div class="lap-cumulative"><strong>${formatDuration(lap.cumulativeTimeMs)}</strong> Totale</div>
         <div class="lap-actions">
@@ -270,8 +273,7 @@ function renderLaps() {
 }
 
 function renderTimer() {
-  const activeStudent = getActiveStudent();
-  const activeSessionStart = activeStudent?.sessionStartedAt || null;
+  const activeSessionStart = state.sessionStartedAt || null;
 
   if (!activeSessionStart) {
     elements.sessionTimer.textContent = '00:00:00';
@@ -342,8 +344,6 @@ function renderStudentButtons() {
 
 function render() {
   ensureActiveStudent();
-  const activeStudent = getActiveStudent();
-  state.sessionStartedAt = activeStudent?.sessionStartedAt || null;
 
   elements.classNameInput.value = state.className || 'Classe 1';
   renderStudentSelect();

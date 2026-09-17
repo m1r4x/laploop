@@ -534,6 +534,13 @@ button:active {
   color: var(--muted);
 }
 
+.lap-student {
+  display: block;
+  color: var(--text);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
 .lap-row .lap-time strong,
 .lap-row .lap-cumulative strong {
   display: block;

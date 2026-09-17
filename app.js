@@ -1,4 +1,14 @@
 const STORAGE_KEY = 'lap-tracker-v1';
+const MAX_STUDENTS = 7;
+const STUDENT_COLORS = [
+  { base: '#31c48d', soft: 'rgba(49, 196, 141, 0.18)' },
+  { base: '#7aa2ff', soft: 'rgba(122, 162, 255, 0.18)' },
+  { base: '#ffb703', soft: 'rgba(255, 183, 3, 0.18)' },
+  { base: '#ff7a59', soft: 'rgba(255, 122, 89, 0.18)' },
+  { base: '#d77bff', soft: 'rgba(215, 123, 255, 0.18)' },
+  { base: '#4dd0e1', soft: 'rgba(77, 208, 225, 0.18)' },
+  { base: '#ff6b9b', soft: 'rgba(255, 107, 155, 0.18)' }
+];
 
 const state = loadState();
 const elements = {
@@ -8,7 +18,7 @@ const elements = {
   studentsList: document.querySelector('#studentsList'),
   activeStudentSummary: document.querySelector('#activeStudentSummary'),
   lapsList: document.querySelector('#lapsList'),
-  lapButton: document.querySelector('#lapButton'),
+  studentButtonsGrid: document.querySelector('#studentButtonsGrid'),
   lapNoteInput: document.querySelector('#lapNoteInput'),
   undoBtn: document.querySelector('#undoBtn'),
   finishStudentBtn: document.querySelector('#finishStudentBtn'),
@@ -142,20 +152,26 @@ function renderStudentsList() {
   }
 
   elements.studentsList.innerHTML = state.students
-    .map((student) => {
+    .map((student, index) => {
       const isActive = student.id === state.activeStudentId;
       const lastLap = student.laps[student.laps.length - 1];
-      const total = lastLap ? lastLap.cumulativeTimeMs : 0;
-      const lastText = lastLap ? `${formatShortDuration(lastLap.lapTimeMs)} / ${formatTimeStamp(lastLap.timestamp)}` : 'Nessun giro';
+      const color = STUDENT_COLORS[index % STUDENT_COLORS.length];
+      const lastLapLabel = lastLap ? formatShortDuration(lastLap.lapTimeMs) : '0:00';
 
       return `
         <div class="student-row">
-          <button class="student-card ${isActive ? 'active' : ''}" data-student-id="${student.id}" type="button">
-            <div>
-              <div class="student-name">${escapeHtml(student.name)}</div>
-              <div class="student-meta">${student.laps.length} giri · ${lastText}</div>
-            </div>
-            <span class="pill">${formatShortDuration(total)}</span>
+          <button
+            class="student-card ${isActive ? 'active' : ''}"
+            data-student-id="${student.id}"
+            type="button"
+            style="--student-accent:${color.base}; --student-accent-soft:${color.soft};"
+          >
+            <span class="student-card__counter">${student.laps.length}</span>
+            <span class="student-card__content">
+              <span class="student-name">${escapeHtml(student.name)}</span>
+              <span class="student-meta">${lastLap ? `Ultimo: ${lastLapLabel}` : 'Nessun giro'}</span>
+            </span>
+            <span class="student-card__pill">${lastLap ? formatShortDuration(lastLap.cumulativeTimeMs) : '00:00'}</span>
           </button>
           <button class="rename-student-btn" type="button" data-student-id="${student.id}" aria-label="Rinomina studente">✎</button>
         </div>
@@ -258,33 +274,63 @@ function renderTimer() {
   elements.sessionTimer.textContent = formatDuration(elapsed);
 }
 
+function renderStudentButtons() {
+  if (!state.students.length) {
+    elements.studentButtonsGrid.innerHTML = '<div class="empty-state">Nessuno studente aggiunto.</div>';
+    return;
+  }
+
+  elements.studentButtonsGrid.innerHTML = state.students
+    .map((student, index) => {
+      const color = STUDENT_COLORS[index % STUDENT_COLORS.length];
+      const lastLap = student.laps[student.laps.length - 1];
+      const totalTime = lastLap ? lastLap.cumulativeTimeMs : 0;
+      const isActive = student.id === state.activeStudentId;
+
+      return `
+        <button
+          class="student-lap-button ${isActive ? 'active' : ''}"
+          data-student-id="${student.id}"
+          type="button"
+          style="--student-accent:${color.base}; --student-accent-soft:${color.soft};"
+          aria-label="Registra un giro per ${escapeHtml(student.name)}"
+        >
+          <span class="student-lap-button__name">${escapeHtml(student.name)}</span>
+          <span class="student-lap-button__count">${student.laps.length} giri</span>
+          <span class="student-lap-button__time">${formatDuration(totalTime)}</span>
+        </button>
+      `;
+    })
+    .join('');
+
+  elements.studentButtonsGrid.querySelectorAll('.student-lap-button').forEach((button) => {
+    button.addEventListener('click', () => {
+      const studentId = button.dataset.studentId;
+      state.activeStudentId = studentId;
+      recordLap(studentId);
+    });
+  });
+}
+
 function render() {
   ensureActiveStudent();
   elements.classNameInput.value = state.className || 'Classe 1';
   renderStudentSelect();
   renderStudentsList();
+  renderStudentButtons();
   renderSummary();
   renderLaps();
   renderTimer();
-
-  const activeStudent = getActiveStudent();
-  const totalLaps = activeStudent ? activeStudent.laps.length : 0;
-
-  const hasStarted = Boolean(state.sessionStartedAt);
-  elements.lapButton.classList.toggle('started', hasStarted);
-
-  if (!hasStarted) {
-    elements.lapButton.querySelector('.lap-button-label').textContent = 'Via';
-    elements.lapButton.querySelector('.lap-button-counter').textContent = '';
-  } else {
-    elements.lapButton.querySelector('.lap-button-label').textContent = 'Giro';
-    elements.lapButton.querySelector('.lap-button-counter').textContent = `${totalLaps} giri`;
-  }
 }
 
 function addStudent(name) {
   const trimmedName = name.trim();
   if (!trimmedName) {
+    return;
+  }
+
+  if (state.students.length >= MAX_STUDENTS) {
+    window.alert(`Puoi monitorare al massimo ${MAX_STUDENTS} ragazzi contemporaneamente.`);
     return;
   }
 
@@ -321,8 +367,8 @@ function renameStudent(studentId) {
   render();
 }
 
-function recordLap() {
-  const activeStudent = getActiveStudent();
+function recordLap(studentId = state.activeStudentId) {
+  const activeStudent = state.students.find((student) => student.id === studentId) || getActiveStudent();
   if (!activeStudent) {
     return;
   }
@@ -349,6 +395,7 @@ function recordLap() {
 
   activeStudent.laps.push(newLap);
   elements.lapNoteInput.value = '';
+  state.activeStudentId = activeStudent.id;
   saveState();
   render();
 }
@@ -614,7 +661,6 @@ function bindEvents() {
     render();
   });
 
-  elements.lapButton.addEventListener('click', recordLap);
   elements.undoBtn.addEventListener('click', undoLastLap);
   elements.finishStudentBtn.addEventListener('click', finishStudentSession);
   elements.resetSessionBtn.addEventListener('click', resetSession);

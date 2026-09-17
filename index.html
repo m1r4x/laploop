@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b1729" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta
+      name="description"
+      content="App rapida per contare giri di corsa e registrare tempi per più studenti."
+    />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>Lap Tracker</title>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="class-editor">
+          <label for="classNameInput">Classe</label>
+          <input id="classNameInput" type="text" maxlength="40" placeholder="Nome classe" />
+        </div>
+        <div class="session-timer" aria-live="polite">
+          <span class="label">Timer</span>
+          <strong id="sessionTimer">00:00:00</strong>
+        </div>
+      </header>
+
+      <section class="student-toolbar">
+        <div class="toolbar-row">
+          <label for="studentSelect">Studente attivo</label>
+          <select id="studentSelect" aria-label="Seleziona studente"></select>
+        </div>
+        <button id="addStudentBtn" class="secondary-button" type="button">+ Studente</button>
+      </section>
+
+      <section id="studentFormSection" class="student-form hidden">
+        <input id="newStudentName" type="text" maxlength="30" placeholder="Nome studente" />
+        <div class="form-actions">
+          <button id="saveStudentBtn" class="primary-button" type="button">Salva</button>
+          <button id="cancelStudentBtn" class="ghost-button" type="button">Chiudi</button>
+        </div>
+      </section>
+
+      <main class="content-grid">
+        <section class="students-panel card">
+          <div class="section-title-row">
+            <h2>Studenti</h2>
+          </div>
+          <div id="studentsList" class="students-list" aria-live="polite"></div>
+        </section>
+
+        <section class="summary-panel card">
+          <div id="activeStudentSummary" class="active-summary"></div>
+
+          <div class="note-block">
+            <label for="lapNoteInput">Nota giro (opzionale)</label>
+            <textarea id="lapNoteInput" rows="3" maxlength="140" placeholder="Es. buona velocità / trattato..."></textarea>
+          </div>
+
+          <button id="lapButton" class="lap-button" type="button">Giro</button>
+
+          <div class="action-row">
+            <button id="undoBtn" class="ghost-button" type="button">Annulla ultimo</button>
+            <button id="exportJsonBtn" class="secondary-button" type="button">Esporta JSON</button>
+            <button id="exportCsvBtn" class="secondary-button" type="button">Esporta CSV</button>
+          </div>
+        </section>
+      </main>
+
+      <section class="laps-panel card">
+        <div class="section-title-row">
+          <h2>Giri</h2>
+        </div>
+        <div id="lapsList" class="laps-list" aria-live="polite"></div>
+      </section>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

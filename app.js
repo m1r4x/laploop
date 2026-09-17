@@ -65,10 +65,7 @@ function loadState() {
       parsed.activeStudentId = parsed.students[0].id;
     }
 
-    if (!parsed.sessionStartedAt) {
-      parsed.sessionStartedAt = Date.now();
-    }
-
+    parsed.sessionStartedAt = null;
     return parsed;
   } catch (error) {
     console.error('Errore nel caricamento dei dati', error);

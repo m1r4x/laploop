@@ -100,6 +100,12 @@ function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+function clearGlobalTimerIfNoActiveStudents() {
+  if (!state.students.some((student) => student.sessionStartedAt)) {
+    state.sessionStartedAt = null;
+  }
+}
+
 function getActiveStudent() {
   return state.students.find((student) => student.id === state.activeStudentId) || state.students[0];
 }
@@ -415,15 +421,15 @@ function recordLap(studentId = state.activeStudentId) {
 
   if (!activeStudent.sessionStartedAt) {
     activeStudent.sessionStartedAt = now;
-    state.sessionStartedAt = now;
+    if (!state.sessionStartedAt) {
+      state.sessionStartedAt = now;
+    }
     state.activeStudentId = activeStudent.id;
     elements.lapNoteInput.value = '';
     saveState();
     render();
     return;
   }
-
-  state.sessionStartedAt = activeStudent.sessionStartedAt;
 
   const previousLap = activeStudent.laps[activeStudent.laps.length - 1];
   const lastTimestamp = previousLap ? previousLap.timestamp : activeStudent.sessionStartedAt;
@@ -455,7 +461,7 @@ function undoLastLap() {
   activeStudent.laps.pop();
   if (!activeStudent.laps.length) {
     activeStudent.sessionStartedAt = null;
-    state.sessionStartedAt = null;
+    clearGlobalTimerIfNoActiveStudents();
   }
   saveState();
   render();
@@ -503,7 +509,7 @@ function finishStudentSession(studentId = state.activeStudentId) {
       secondaryLabel: 'No',
       onPrimary: () => {
         activeStudent.sessionStartedAt = null;
-        state.sessionStartedAt = null;
+        clearGlobalTimerIfNoActiveStudents();
         elements.lapNoteInput.value = '';
         saveState();
         render();
@@ -514,7 +520,7 @@ function finishStudentSession(studentId = state.activeStudentId) {
 
   if (!activeStudent.laps.length) {
     activeStudent.sessionStartedAt = null;
-    state.sessionStartedAt = null;
+    clearGlobalTimerIfNoActiveStudents();
     elements.lapNoteInput.value = '';
     saveState();
     render();
@@ -543,14 +549,14 @@ function finishStudentSession(studentId = state.activeStudentId) {
       });
 
       activeStudent.sessionStartedAt = null;
-      state.sessionStartedAt = null;
+      clearGlobalTimerIfNoActiveStudents();
       elements.lapNoteInput.value = '';
       saveState();
       render();
     },
     onSecondary: () => {
       activeStudent.sessionStartedAt = null;
-      state.sessionStartedAt = null;
+      clearGlobalTimerIfNoActiveStudents();
       elements.lapNoteInput.value = '';
       saveState();
       render();

@@ -20,7 +20,7 @@ const elements = {
   lapsList: document.querySelector('#lapsList'),
   studentButtonsGrid: document.querySelector('#studentButtonsGrid'),
   lapNoteInput: document.querySelector('#lapNoteInput'),
-  undoBtn: document.querySelector('#undoBtn'),
+  finishAllBtn: document.querySelector('#finishAllBtn'),
   exportJsonBtn: document.querySelector('#exportJsonBtn'),
   exportCsvBtn: document.querySelector('#exportCsvBtn'),
   refreshCacheBtn: document.querySelector('#refreshCacheBtn'),
@@ -271,7 +271,7 @@ function renderLaps() {
 
 function renderTimer() {
   const activeStudent = getActiveStudent();
-  const activeSessionStart = activeStudent?.sessionStartedAt || state.sessionStartedAt;
+  const activeSessionStart = activeStudent?.sessionStartedAt || null;
 
   if (!activeSessionStart) {
     elements.sessionTimer.textContent = '00:00:00';
@@ -337,13 +337,6 @@ function renderStudentButtons() {
 
 function render() {
   ensureActiveStudent();
-  const activeStudent = getActiveStudent();
-  if (activeStudent && activeStudent.sessionStartedAt) {
-    state.sessionStartedAt = activeStudent.sessionStartedAt;
-  } else {
-    state.sessionStartedAt = null;
-  }
-
   elements.classNameInput.value = state.className || 'Classe 1';
   renderStudentSelect();
   renderStudentsList();
@@ -407,7 +400,6 @@ function recordLap(studentId = state.activeStudentId) {
 
   if (!activeStudent.sessionStartedAt) {
     activeStudent.sessionStartedAt = now;
-    state.sessionStartedAt = now;
   }
 
   const previousLap = activeStudent.laps[activeStudent.laps.length - 1];
@@ -534,20 +526,23 @@ function finishStudentSession(studentId = state.activeStudentId) {
   });
 }
 
-function resetSession() {
-  const activeStudent = getActiveStudent();
-  if (!activeStudent) {
+function finishAllActiveStudents() {
+  const runningStudents = state.students.filter((student) => student.sessionStartedAt);
+  if (!runningStudents.length) {
     return;
   }
 
-  const confirmed = window.confirm('Resettare la sessione corrente dello studente attivo?');
+  const confirmed = window.confirm('Chiudere la corsa di tutti gli studenti attivi?');
   if (!confirmed) {
     return;
   }
 
-  activeStudent.sessionStartedAt = null;
+  runningStudents.forEach((student) => {
+    student.sessionStartedAt = null;
+  });
+
   state.sessionStartedAt = null;
-  activeStudent.laps = [];
+  elements.lapNoteInput.value = '';
   saveState();
   render();
 }
@@ -700,7 +695,7 @@ function bindEvents() {
     render();
   });
 
-  elements.undoBtn.addEventListener('click', undoLastLap);
+  elements.finishAllBtn.addEventListener('click', finishAllActiveStudents);
   elements.exportJsonBtn.addEventListener('click', exportToJson);
   elements.exportCsvBtn.addEventListener('click', exportToCsv);
   elements.refreshCacheBtn.addEventListener('click', forceReloadApp);

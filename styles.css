@@ -343,14 +343,18 @@ button:active {
 }
 
 .lap-button-runner {
+  width: 2.6rem;
+  min-width: 2.6rem;
+  height: 2.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: clamp(2rem, 6vw, 3rem);
-  display: inline-block;
   transform-origin: center;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.2s ease, visibility 0.2s ease, filter 0.2s ease;
   filter: saturate(0.5);
-  flex-shrink: 0;
 }
 
 .lap-button.started {
@@ -366,20 +370,23 @@ button:active {
 }
 
 .lap-button-content {
-  display: flex;
+  display: inline-flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   line-height: 1;
   text-align: center;
+  min-width: 0;
 }
 
 .lap-button-label {
+  display: block;
   font-size: clamp(1.6rem, 4.5vw, 2.7rem);
   line-height: 1;
 }
 
 .lap-button-counter {
+  display: block;
   font-size: 0.8rem;
   opacity: 0.9;
   margin-top: 4px;

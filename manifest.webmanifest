@@ -1,11 +1,18 @@
 {
   "name": "Lap Tracker",
   "short_name": "LapTracker",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ],
   "description": "App per contare i giri di corsa di più studenti.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#081822",
   "theme_color": "#0b1729",
-  "orientation": "portrait",
-  "icons": []
+  "orientation": "portrait"
 }

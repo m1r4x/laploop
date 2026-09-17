@@ -297,7 +297,8 @@ function renderStudentButtons() {
       const lastLap = student.laps[student.laps.length - 1];
       const totalTime = lastLap ? lastLap.cumulativeTimeMs : 0;
       const isActive = student.id === state.activeStudentId;
-      const liveTimeMs = student.sessionStartedAt ? Date.now() - student.sessionStartedAt : totalTime;
+      const lapStart = lastLap ? lastLap.timestamp : student.sessionStartedAt;
+      const liveTimeMs = student.sessionStartedAt && lapStart ? Date.now() - lapStart : 0;
       const lapLabel = `${student.laps.length} giri`;
 
       return `

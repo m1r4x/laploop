@@ -11,6 +11,7 @@ const elements = {
   lapButton: document.querySelector('#lapButton'),
   lapNoteInput: document.querySelector('#lapNoteInput'),
   undoBtn: document.querySelector('#undoBtn'),
+  finishStudentBtn: document.querySelector('#finishStudentBtn'),
   resetSessionBtn: document.querySelector('#resetSessionBtn'),
   exportJsonBtn: document.querySelector('#exportJsonBtn'),
   exportCsvBtn: document.querySelector('#exportCsvBtn'),
@@ -259,10 +260,15 @@ function render() {
   renderLaps();
   renderTimer();
 
+  const activeStudent = getActiveStudent();
+  const totalLaps = activeStudent ? activeStudent.laps.length : 0;
+
   if (!state.sessionStartedAt) {
-    elements.lapButton.textContent = 'Via';
+    elements.lapButton.querySelector('.lap-button-label').textContent = 'Via';
+    elements.lapButton.querySelector('.lap-button-counter').textContent = `${totalLaps} giri`;
   } else {
-    elements.lapButton.textContent = 'Giro';
+    elements.lapButton.querySelector('.lap-button-label').textContent = 'Giro';
+    elements.lapButton.querySelector('.lap-button-counter').textContent = `${totalLaps} giri`;
   }
 }
 
@@ -344,6 +350,22 @@ function undoLastLap() {
   }
 
   activeStudent.laps.pop();
+  saveState();
+  render();
+}
+
+function finishStudentSession() {
+  const activeStudent = getActiveStudent();
+  if (!activeStudent) {
+    return;
+  }
+
+  const confirmed = window.confirm(`Finire la corsa di ${activeStudent.name}?`);
+  if (!confirmed) {
+    return;
+  }
+
+  state.sessionStartedAt = null;
   saveState();
   render();
 }
@@ -481,6 +503,7 @@ function bindEvents() {
 
   elements.lapButton.addEventListener('click', recordLap);
   elements.undoBtn.addEventListener('click', undoLastLap);
+  elements.finishStudentBtn.addEventListener('click', finishStudentSession);
   elements.resetSessionBtn.addEventListener('click', resetSession);
   elements.exportJsonBtn.addEventListener('click', exportToJson);
   elements.exportCsvBtn.addEventListener('click', exportToCsv);

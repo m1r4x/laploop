@@ -330,6 +330,40 @@ button:active {
   font-weight: 900;
   letter-spacing: 0.04em;
   box-shadow: 0 12px 26px rgba(28, 162, 106, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.lap-button-runner {
+  font-size: clamp(2rem, 6vw, 3rem);
+  display: inline-block;
+  transform-origin: center;
+  animation: runner-bob 0.7s ease-in-out infinite alternate;
+}
+
+.lap-button-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1;
+}
+
+.lap-button-label {
+  font-size: clamp(1.6rem, 4.5vw, 2.7rem);
+}
+
+.lap-button-counter {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  margin-top: 4px;
+}
+
+@keyframes runner-bob {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-4px) scale(1.08); }
 }
 
 .lap-actions {

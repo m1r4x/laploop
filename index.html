@@ -59,10 +59,19 @@
             <textarea id="lapNoteInput" rows="3" maxlength="140" placeholder="Es. buona velocità / trattato..."></textarea>
           </div>
 
-          <button id="lapButton" class="lap-button" type="button">Giro</button>
+          <button id="lapButton" class="lap-button" type="button" aria-live="polite">
+            <span class="lap-button-runner" aria-hidden="true">🏃</span>
+            <span class="lap-button-content">
+              <span class="lap-button-label">Via</span>
+              <span class="lap-button-counter">0 giri</span>
+            </span>
+          </button>
 
           <div class="action-row">
             <button id="undoBtn" class="ghost-button" type="button">Annulla ultimo</button>
+            <button id="finishStudentBtn" class="ghost-button" type="button">Fine studente</button>
+          </div>
+          <div class="action-row">
             <button id="resetSessionBtn" class="ghost-button danger" type="button">Reset sessione</button>
           </div>
           <div class="action-row">

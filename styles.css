@@ -467,6 +467,47 @@ button:active {
   text-align: center;
 }
 
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 10, 14, 0.7);
+  padding: 16px;
+  z-index: 50;
+}
+
+.dialog {
+  width: min(100%, 380px);
+  background: rgba(16, 37, 52, 0.98);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  padding: 18px 16px 14px;
+}
+
+.dialog h3 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+}
+
+.dialog p {
+  margin: 0 0 16px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dialog-actions button {
+  flex: 1;
+}
+
 @media (max-width: 760px) {
   .content-grid {
     grid-template-columns: 1fr;

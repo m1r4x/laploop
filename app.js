@@ -16,6 +16,12 @@ const elements = {
   exportJsonBtn: document.querySelector('#exportJsonBtn'),
   exportCsvBtn: document.querySelector('#exportCsvBtn'),
   refreshCacheBtn: document.querySelector('#refreshCacheBtn'),
+  customDialog: document.querySelector('#customDialog'),
+  customDialogTitle: document.querySelector('#customDialogTitle'),
+  customDialogText: document.querySelector('#customDialogText'),
+  dialogPrimaryBtn: document.querySelector('#dialogPrimaryBtn'),
+  dialogSecondaryBtn: document.querySelector('#dialogSecondaryBtn'),
+  dialogCloseBtn: document.querySelector('#dialogCloseBtn'),
   addStudentBtn: document.querySelector('#addStudentBtn'),
   studentFormSection: document.querySelector('#studentFormSection'),
   newStudentName: document.querySelector('#newStudentName'),
@@ -358,20 +364,89 @@ function undoLastLap() {
   render();
 }
 
+function showCustomDialog({ title, text, primaryLabel, secondaryLabel, onPrimary, onSecondary }) {
+  elements.customDialogTitle.textContent = title;
+  elements.customDialogText.textContent = text;
+  elements.dialogPrimaryBtn.textContent = primaryLabel;
+  elements.dialogSecondaryBtn.textContent = secondaryLabel;
+
+  elements.dialogPrimaryBtn.onclick = () => {
+    elements.customDialog.classList.add('hidden');
+    if (onPrimary) {
+      onPrimary();
+    }
+  };
+
+  elements.dialogSecondaryBtn.onclick = () => {
+    elements.customDialog.classList.add('hidden');
+    if (onSecondary) {
+      onSecondary();
+    }
+  };
+
+  elements.dialogCloseBtn.onclick = () => {
+    elements.customDialog.classList.add('hidden');
+  };
+
+  elements.customDialog.classList.remove('hidden');
+  elements.customDialog.setAttribute('aria-hidden', 'false');
+}
+
 function finishStudentSession() {
   const activeStudent = getActiveStudent();
   if (!activeStudent) {
     return;
   }
 
-  const confirmed = window.confirm(`Finire la corsa di ${activeStudent.name}?`);
-  if (!confirmed) {
+  if (!state.sessionStartedAt) {
+    showCustomDialog({
+      title: 'Fine corsa',
+      text: `Confermi la chiusura della corsa di ${activeStudent.name}?`,
+      primaryLabel: 'Sì',
+      secondaryLabel: 'No',
+      onPrimary: () => {
+        state.sessionStartedAt = null;
+        elements.lapNoteInput.value = '';
+        saveState();
+        render();
+      }
+    });
     return;
   }
 
-  state.sessionStartedAt = null;
-  saveState();
-  render();
+  showCustomDialog({
+    title: 'Ultimo giro',
+    text: `Salvare l'ultimo tempo di ${activeStudent.name} come giro finale?`,
+    primaryLabel: 'Salva',
+    secondaryLabel: 'No, chiudi',
+    onPrimary: () => {
+      const now = Date.now();
+      const previousLap = activeStudent.laps[activeStudent.laps.length - 1];
+      const lastTimestamp = previousLap ? previousLap.timestamp : state.sessionStartedAt;
+      const lapTimeMs = previousLap ? now - lastTimestamp : now - state.sessionStartedAt;
+      const cumulativeTimeMs = previousLap ? previousLap.cumulativeTimeMs + lapTimeMs : lapTimeMs;
+
+      activeStudent.laps.push({
+        id: createId(),
+        lapNumber: activeStudent.laps.length + 1,
+        lapTimeMs,
+        cumulativeTimeMs,
+        timestamp: now,
+        note: elements.lapNoteInput.value.trim() || 'Corsa conclusa'
+      });
+
+      state.sessionStartedAt = null;
+      elements.lapNoteInput.value = '';
+      saveState();
+      render();
+    },
+    onSecondary: () => {
+      state.sessionStartedAt = null;
+      elements.lapNoteInput.value = '';
+      saveState();
+      render();
+    }
+  });
 }
 
 function resetSession() {
@@ -392,7 +467,23 @@ function resetSession() {
 }
 
 async function forceReloadApp() {
+  const confirmed = window.confirm('Ripristinare la situazione iniziale dell\'app e ricaricarla?');
+  if (!confirmed) {
+    return;
+  }
+
   try {
+    localStorage.removeItem(STORAGE_KEY);
+    state.className = 'Classe 1';
+    state.activeStudentId = null;
+    state.sessionStartedAt = null;
+    state.students = [
+      { id: createId(), name: 'Studente 1', laps: [] },
+      { id: createId(), name: 'Studente 2', laps: [] }
+    ];
+    state.activeStudentId = state.students[0].id;
+    saveState();
+
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
       await Promise.all(registrations.map((registration) => registration.unregister()));

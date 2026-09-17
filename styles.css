@@ -169,6 +169,11 @@ textarea {
   flex: 1;
 }
 
+.start-race-button {
+  background: linear-gradient(180deg, #43e0a4 0%, #1ca26a 100%);
+  color: #062317;
+}
+
 .secondary-button {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text);

@@ -20,6 +20,7 @@ const elements = {
   lapsList: document.querySelector('#lapsList'),
   studentButtonsGrid: document.querySelector('#studentButtonsGrid'),
   lapNoteInput: document.querySelector('#lapNoteInput'),
+  startAllBtn: document.querySelector('#startAllBtn'),
   finishAllBtn: document.querySelector('#finishAllBtn'),
   exportJsonBtn: document.querySelector('#exportJsonBtn'),
   exportCsvBtn: document.querySelector('#exportCsvBtn'),
@@ -98,12 +99,6 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-function clearGlobalTimerIfNoActiveStudents() {
-  if (!state.students.some((student) => student.sessionStartedAt)) {
-    state.sessionStartedAt = null;
-  }
 }
 
 function getActiveStudent() {
@@ -303,11 +298,7 @@ function renderStudentButtons() {
       const totalTime = lastLap ? lastLap.cumulativeTimeMs : 0;
       const isActive = student.id === state.activeStudentId;
       const liveTimeMs = student.sessionStartedAt ? Date.now() - student.sessionStartedAt : totalTime;
-      const lapLabel = !student.sessionStartedAt
-        ? 'VIA'
-        : student.laps.length === 0
-          ? '0 giri'
-          : `${student.laps.length} giri`;
+      const lapLabel = `${student.laps.length} giri`;
 
       return `
         <div class="student-button-shell" data-student-id="${student.id}">
@@ -413,23 +404,11 @@ function renameStudent(studentId) {
 
 function recordLap(studentId = state.activeStudentId) {
   const activeStudent = state.students.find((student) => student.id === studentId) || getActiveStudent();
-  if (!activeStudent) {
+  if (!activeStudent || !state.sessionStartedAt || !activeStudent.sessionStartedAt) {
     return;
   }
 
   const now = Date.now();
-
-  if (!activeStudent.sessionStartedAt) {
-    activeStudent.sessionStartedAt = now;
-    if (!state.sessionStartedAt) {
-      state.sessionStartedAt = now;
-    }
-    state.activeStudentId = activeStudent.id;
-    elements.lapNoteInput.value = '';
-    saveState();
-    render();
-    return;
-  }
 
   const previousLap = activeStudent.laps[activeStudent.laps.length - 1];
   const lastTimestamp = previousLap ? previousLap.timestamp : activeStudent.sessionStartedAt;
@@ -452,6 +431,20 @@ function recordLap(studentId = state.activeStudentId) {
   render();
 }
 
+function startAllStudents() {
+  if (!state.students.length || state.sessionStartedAt) {
+    return;
+  }
+
+  const startTime = Date.now();
+  state.sessionStartedAt = startTime;
+  state.students.forEach((student) => {
+    student.sessionStartedAt = startTime;
+  });
+  saveState();
+  render();
+}
+
 function undoLastLap() {
   const activeStudent = getActiveStudent();
   if (!activeStudent || !activeStudent.laps.length) {
@@ -461,7 +454,6 @@ function undoLastLap() {
   activeStudent.laps.pop();
   if (!activeStudent.laps.length) {
     activeStudent.sessionStartedAt = null;
-    clearGlobalTimerIfNoActiveStudents();
   }
   saveState();
   render();
@@ -509,7 +501,6 @@ function finishStudentSession(studentId = state.activeStudentId) {
       secondaryLabel: 'No',
       onPrimary: () => {
         activeStudent.sessionStartedAt = null;
-        clearGlobalTimerIfNoActiveStudents();
         elements.lapNoteInput.value = '';
         saveState();
         render();
@@ -520,7 +511,6 @@ function finishStudentSession(studentId = state.activeStudentId) {
 
   if (!activeStudent.laps.length) {
     activeStudent.sessionStartedAt = null;
-    clearGlobalTimerIfNoActiveStudents();
     elements.lapNoteInput.value = '';
     saveState();
     render();
@@ -549,14 +539,12 @@ function finishStudentSession(studentId = state.activeStudentId) {
       });
 
       activeStudent.sessionStartedAt = null;
-      clearGlobalTimerIfNoActiveStudents();
       elements.lapNoteInput.value = '';
       saveState();
       render();
     },
     onSecondary: () => {
       activeStudent.sessionStartedAt = null;
-      clearGlobalTimerIfNoActiveStudents();
       elements.lapNoteInput.value = '';
       saveState();
       render();
@@ -747,6 +735,7 @@ function bindEvents() {
     render();
   });
 
+  elements.startAllBtn.addEventListener('click', startAllStudents);
   elements.finishAllBtn.addEventListener('click', finishAllActiveStudents);
   elements.exportJsonBtn.addEventListener('click', exportToJson);
   elements.exportCsvBtn.addEventListener('click', exportToCsv);

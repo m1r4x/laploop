@@ -48,12 +48,14 @@ function createDefaultState() {
       {
         id: createId(),
         name: 'Studente 1',
-        laps: []
+        laps: [],
+        sessionStartedAt: null
       },
       {
         id: createId(),
         name: 'Studente 2',
-        laps: []
+        laps: [],
+        sessionStartedAt: null
       }
     ]
   };
@@ -82,6 +84,11 @@ function loadState() {
     if (!parsed.activeStudentId && parsed.students.length > 0) {
       parsed.activeStudentId = parsed.students[0].id;
     }
+
+    parsed.students = parsed.students.map((student) => ({
+      ...student,
+      sessionStartedAt: student.sessionStartedAt || null
+    }));
 
     parsed.sessionStartedAt = null;
     return parsed;
@@ -265,12 +272,15 @@ function renderLaps() {
 }
 
 function renderTimer() {
-  if (!state.sessionStartedAt) {
+  const activeStudent = getActiveStudent();
+  const activeSessionStart = activeStudent?.sessionStartedAt || state.sessionStartedAt;
+
+  if (!activeSessionStart) {
     elements.sessionTimer.textContent = '00:00:00';
     return;
   }
 
-  const elapsed = Date.now() - state.sessionStartedAt;
+  const elapsed = Date.now() - activeSessionStart;
   elements.sessionTimer.textContent = formatDuration(elapsed);
 }
 
@@ -286,19 +296,26 @@ function renderStudentButtons() {
       const lastLap = student.laps[student.laps.length - 1];
       const totalTime = lastLap ? lastLap.cumulativeTimeMs : 0;
       const isActive = student.id === state.activeStudentId;
+      const liveTimeMs = student.sessionStartedAt ? Date.now() - student.sessionStartedAt : totalTime;
 
       return `
-        <button
-          class="student-lap-button ${isActive ? 'active' : ''}"
-          data-student-id="${student.id}"
-          type="button"
-          style="--student-accent:${color.base}; --student-accent-soft:${color.soft};"
-          aria-label="Registra un giro per ${escapeHtml(student.name)}"
-        >
-          <span class="student-lap-button__name">${escapeHtml(student.name)}</span>
-          <span class="student-lap-button__count">${student.laps.length} giri</span>
-          <span class="student-lap-button__time">${formatDuration(totalTime)}</span>
-        </button>
+        <div class="student-button-shell" data-student-id="${student.id}">
+          <button
+            class="student-lap-button ${isActive ? 'active' : ''} ${student.sessionStartedAt ? 'running' : ''}"
+            data-student-id="${student.id}"
+            type="button"
+            style="--student-accent:${color.base}; --student-accent-soft:${color.soft};"
+            aria-label="Registra un giro per ${escapeHtml(student.name)}"
+          >
+            <span class="student-lap-button__runner" aria-hidden="true">🏃</span>
+            <span class="student-lap-button__body">
+              <span class="student-lap-button__name">${escapeHtml(student.name)}</span>
+              <span class="student-lap-button__count">${student.laps.length} giri</span>
+              <span class="student-lap-button__time">${formatDuration(liveTimeMs)}</span>
+            </span>
+          </button>
+          <button class="student-finish-btn" data-student-id="${student.id}" type="button">Fine</button>
+        </div>
       `;
     })
     .join('');
@@ -310,10 +327,25 @@ function renderStudentButtons() {
       recordLap(studentId);
     });
   });
+
+  elements.studentButtonsGrid.querySelectorAll('.student-finish-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const studentId = button.dataset.studentId;
+      state.activeStudentId = studentId;
+      finishStudentSession(studentId);
+    });
+  });
 }
 
 function render() {
   ensureActiveStudent();
+  const activeStudent = getActiveStudent();
+  if (activeStudent && activeStudent.sessionStartedAt) {
+    state.sessionStartedAt = activeStudent.sessionStartedAt;
+  } else {
+    state.sessionStartedAt = null;
+  }
+
   elements.classNameInput.value = state.className || 'Classe 1';
   renderStudentSelect();
   renderStudentsList();
@@ -375,12 +407,13 @@ function recordLap(studentId = state.activeStudentId) {
 
   const now = Date.now();
 
-  if (!state.sessionStartedAt) {
+  if (!activeStudent.sessionStartedAt) {
+    activeStudent.sessionStartedAt = now;
     state.sessionStartedAt = now;
   }
 
   const previousLap = activeStudent.laps[activeStudent.laps.length - 1];
-  const lastTimestamp = previousLap ? previousLap.timestamp : state.sessionStartedAt;
+  const lastTimestamp = previousLap ? previousLap.timestamp : activeStudent.sessionStartedAt;
   const lapTimeMs = previousLap ? now - lastTimestamp : 0;
   const cumulativeTimeMs = previousLap ? previousLap.cumulativeTimeMs + lapTimeMs : lapTimeMs;
 
@@ -407,6 +440,10 @@ function undoLastLap() {
   }
 
   activeStudent.laps.pop();
+  if (!activeStudent.laps.length) {
+    activeStudent.sessionStartedAt = null;
+    state.sessionStartedAt = null;
+  }
   saveState();
   render();
 }
@@ -439,19 +476,20 @@ function showCustomDialog({ title, text, primaryLabel, secondaryLabel, onPrimary
   elements.customDialog.setAttribute('aria-hidden', 'false');
 }
 
-function finishStudentSession() {
-  const activeStudent = getActiveStudent();
+function finishStudentSession(studentId = state.activeStudentId) {
+  const activeStudent = state.students.find((student) => student.id === studentId) || getActiveStudent();
   if (!activeStudent) {
     return;
   }
 
-  if (!state.sessionStartedAt) {
+  if (!activeStudent.sessionStartedAt) {
     showCustomDialog({
       title: 'Fine corsa',
       text: `Confermi la chiusura della corsa di ${activeStudent.name}?`,
       primaryLabel: 'Sì',
       secondaryLabel: 'No',
       onPrimary: () => {
+        activeStudent.sessionStartedAt = null;
         state.sessionStartedAt = null;
         elements.lapNoteInput.value = '';
         saveState();
@@ -469,8 +507,8 @@ function finishStudentSession() {
     onPrimary: () => {
       const now = Date.now();
       const previousLap = activeStudent.laps[activeStudent.laps.length - 1];
-      const lastTimestamp = previousLap ? previousLap.timestamp : state.sessionStartedAt;
-      const lapTimeMs = previousLap ? now - lastTimestamp : now - state.sessionStartedAt;
+      const lastTimestamp = previousLap ? previousLap.timestamp : activeStudent.sessionStartedAt;
+      const lapTimeMs = previousLap ? now - lastTimestamp : now - activeStudent.sessionStartedAt;
       const cumulativeTimeMs = previousLap ? previousLap.cumulativeTimeMs + lapTimeMs : lapTimeMs;
 
       activeStudent.laps.push({
@@ -482,12 +520,14 @@ function finishStudentSession() {
         note: elements.lapNoteInput.value.trim() || 'Corsa conclusa'
       });
 
+      activeStudent.sessionStartedAt = null;
       state.sessionStartedAt = null;
       elements.lapNoteInput.value = '';
       saveState();
       render();
     },
     onSecondary: () => {
+      activeStudent.sessionStartedAt = null;
       state.sessionStartedAt = null;
       elements.lapNoteInput.value = '';
       saveState();
@@ -507,6 +547,7 @@ function resetSession() {
     return;
   }
 
+  activeStudent.sessionStartedAt = null;
   state.sessionStartedAt = null;
   activeStudent.laps = [];
   saveState();

@@ -348,9 +348,16 @@ button:active {
 
 .student-buttons-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   margin-bottom: 12px;
+}
+
+.student-button-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 4px;
 }
 
 .student-lap-button {
@@ -358,16 +365,15 @@ button:active {
   width: 100%;
   min-height: 120px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 8px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 18px;
   background: linear-gradient(180deg, var(--student-accent) 0%, var(--student-accent-soft) 100%);
   color: #fff;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
-  padding: 16px 12px;
+  padding: 14px 12px 14px 16px;
   text-align: center;
   transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
@@ -379,6 +385,38 @@ button:active {
 .student-lap-button.active {
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.36), 0 12px 24px rgba(0, 0, 0, 0.22);
   filter: brightness(1.04);
+}
+
+.student-lap-button__runner {
+  position: absolute;
+  left: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  font-size: clamp(1.6rem, 3.8vw, 2.2rem);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-4px);
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+}
+
+.student-lap-button.running .student-lap-button__runner {
+  opacity: 1;
+  visibility: visible;
+  animation: runner-bob 0.7s ease-in-out infinite alternate;
+}
+
+.student-lap-button__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  padding-left: 18px;
+  text-align: center;
 }
 
 .student-lap-button__name {
@@ -399,6 +437,21 @@ button:active {
   font-size: clamp(1.3rem, 4vw, 2rem);
   font-weight: 900;
   line-height: 1;
+}
+
+.student-finish-btn {
+  min-height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-top: 0;
+  margin-bottom: 2px;
 }
 
 @keyframes runner-bob {

@@ -21,10 +21,9 @@ const elements = {
 };
 
 function createDefaultState() {
-  const now = Date.now();
   return {
     className: 'Classe 1',
-    sessionStartedAt: now,
+    sessionStartedAt: null,
     activeStudentId: null,
     students: [
       {
@@ -144,22 +143,31 @@ function renderStudentsList() {
       const lastText = lastLap ? `${formatShortDuration(lastLap.lapTimeMs)} / ${formatTimeStamp(lastLap.timestamp)}` : 'Nessun giro';
 
       return `
-        <button class="student-card ${isActive ? 'active' : ''}" data-student-id="${student.id}" type="button">
-          <div>
-            <div class="student-name">${escapeHtml(student.name)}</div>
-            <div class="student-meta">${student.laps.length} giri · ${lastText}</div>
-          </div>
-          <span class="pill">${formatShortDuration(total)}</span>
-        </button>
+        <div class="student-row">
+          <button class="student-card ${isActive ? 'active' : ''}" data-student-id="${student.id}" type="button">
+            <div>
+              <div class="student-name">${escapeHtml(student.name)}</div>
+              <div class="student-meta">${student.laps.length} giri · ${lastText}</div>
+            </div>
+            <span class="pill">${formatShortDuration(total)}</span>
+          </button>
+          <button class="rename-student-btn" type="button" data-student-id="${student.id}" aria-label="Rinomina studente">✎</button>
+        </div>
       `;
     })
     .join('');
 
-  elements.studentsList.querySelectorAll('[data-student-id]').forEach((button) => {
+  elements.studentsList.querySelectorAll('.student-card').forEach((button) => {
     button.addEventListener('click', () => {
       state.activeStudentId = button.dataset.studentId;
       saveState();
       render();
+    });
+  });
+
+  elements.studentsList.querySelectorAll('.rename-student-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      renameStudent(button.dataset.studentId);
     });
   });
 }
@@ -235,6 +243,11 @@ function renderLaps() {
 }
 
 function renderTimer() {
+  if (!state.sessionStartedAt) {
+    elements.sessionTimer.textContent = '00:00:00';
+    return;
+  }
+
   const elapsed = Date.now() - state.sessionStartedAt;
   elements.sessionTimer.textContent = formatDuration(elapsed);
 }
@@ -247,6 +260,12 @@ function render() {
   renderSummary();
   renderLaps();
   renderTimer();
+
+  if (!state.sessionStartedAt) {
+    elements.lapButton.textContent = 'Via';
+  } else {
+    elements.lapButton.textContent = 'Giro';
+  }
 }
 
 function addStudent(name) {
@@ -267,6 +286,27 @@ function addStudent(name) {
   render();
 }
 
+function renameStudent(studentId) {
+  const student = state.students.find((item) => item.id === studentId);
+  if (!student) {
+    return;
+  }
+
+  const nextName = window.prompt('Nuovo nome studente:', student.name);
+  if (nextName === null) {
+    return;
+  }
+
+  const trimmed = nextName.trim();
+  if (!trimmed) {
+    return;
+  }
+
+  student.name = trimmed;
+  saveState();
+  render();
+}
+
 function recordLap() {
   const activeStudent = getActiveStudent();
   if (!activeStudent) {
@@ -274,9 +314,14 @@ function recordLap() {
   }
 
   const now = Date.now();
+
+  if (!state.sessionStartedAt) {
+    state.sessionStartedAt = now;
+  }
+
   const previousLap = activeStudent.laps[activeStudent.laps.length - 1];
   const lastTimestamp = previousLap ? previousLap.timestamp : state.sessionStartedAt;
-  const lapTimeMs = now - lastTimestamp;
+  const lapTimeMs = previousLap ? now - lastTimestamp : 0;
   const cumulativeTimeMs = previousLap ? previousLap.cumulativeTimeMs + lapTimeMs : lapTimeMs;
 
   const newLap = {
@@ -462,6 +507,25 @@ function bindEvents() {
     if (button.dataset.action === 'delete-lap') {
       deleteLapById(lapId);
     }
+  });
+
+  elements.studentsList.addEventListener('contextmenu', (event) => {
+    const studentButton = event.target.closest('[data-student-id]');
+    if (!studentButton) {
+      return;
+    }
+
+    event.preventDefault();
+    renameStudent(studentButton.dataset.studentId);
+  });
+
+  elements.studentsList.addEventListener('dblclick', (event) => {
+    const studentButton = event.target.closest('[data-student-id]');
+    if (!studentButton) {
+      return;
+    }
+
+    renameStudent(studentButton.dataset.studentId);
   });
 }
 

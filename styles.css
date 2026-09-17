@@ -213,18 +213,35 @@ button:active {
   gap: 10px;
 }
 
+.student-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .student-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  width: 100%;
+  flex: 1;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 12px 12px;
   color: var(--text);
   text-align: left;
+}
+
+.rename-student-btn {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: 1.2rem;
+  cursor: pointer;
 }
 
 .student-card.active {

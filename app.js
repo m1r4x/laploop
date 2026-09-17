@@ -271,7 +271,7 @@ function renderLaps() {
 
 function renderTimer() {
   const activeStudent = getActiveStudent();
-  const activeSessionStart = state.sessionStartedAt || activeStudent?.sessionStartedAt || null;
+  const activeSessionStart = activeStudent?.sessionStartedAt || null;
 
   if (!activeSessionStart) {
     elements.sessionTimer.textContent = '00:00:00';
@@ -295,6 +295,7 @@ function renderStudentButtons() {
       const totalTime = lastLap ? lastLap.cumulativeTimeMs : 0;
       const isActive = student.id === state.activeStudentId;
       const liveTimeMs = student.sessionStartedAt ? Date.now() - student.sessionStartedAt : totalTime;
+      const lapLabel = student.sessionStartedAt && student.laps.length === 0 ? 'VIA' : `${student.laps.length} giri`;
 
       return `
         <div class="student-button-shell" data-student-id="${student.id}">
@@ -308,7 +309,7 @@ function renderStudentButtons() {
             <span class="student-lap-button__runner" aria-hidden="true">🏃</span>
             <span class="student-lap-button__body">
               <span class="student-lap-button__name">${escapeHtml(student.name)}</span>
-              <span class="student-lap-button__count">${student.laps.length} giri</span>
+              <span class="student-lap-button__count">${lapLabel}</span>
               <span class="student-lap-button__time">${formatDuration(liveTimeMs)}</span>
             </span>
           </button>
@@ -337,6 +338,9 @@ function renderStudentButtons() {
 
 function render() {
   ensureActiveStudent();
+  const activeStudent = getActiveStudent();
+  state.sessionStartedAt = activeStudent?.sessionStartedAt || null;
+
   elements.classNameInput.value = state.className || 'Classe 1';
   renderStudentSelect();
   renderStudentsList();
